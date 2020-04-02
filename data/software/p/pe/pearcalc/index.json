@@ -1,0 +1,10 @@
+{
+	"name": "pearCalc",
+	"links": {
+		"product": "http://www.pearworks.com/pages/pearcalc.html"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true
+}
