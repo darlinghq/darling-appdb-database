@@ -1,0 +1,13 @@
+{
+	"name": "GNUPlot",
+	"links": {
+		"product": "http://www.gnuplot.info"
+	},
+	"cpu": [
+		"x86-64",
+	],
+	"free": true,
+	"categories": [
+		"graphics"
+	]
+}

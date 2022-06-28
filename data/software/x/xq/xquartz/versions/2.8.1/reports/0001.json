@@ -1,0 +1,4 @@
+{
+	"status": "garbage",
+	"description": "Installs successfully, but hangs when trying to run and causes all client applications to hang when they try to access it."
+}

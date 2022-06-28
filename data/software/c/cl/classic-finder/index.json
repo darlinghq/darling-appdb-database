@@ -1,0 +1,13 @@
+{
+	"name": "Classic Finder",
+	"links": {
+		"product": "https://web.archive.org/web/20220407135022/https://www.classicmacfinder.com/"
+	},
+	"cpu": [
+		"x86-64",
+	],
+	"free": true,
+	"categories": [
+		"productivity"
+	]
+}
