@@ -1,0 +1,114 @@
+name: pr-validate
+
+# Validates data pull requests and merges the safe ones automatically.
+#
+# SECURITY: this runs on pull_request_target (it gets a write token and runs
+# for pull requests from forks), so it must never check out or execute code
+# from the pull request. The PR head is fetched as git objects only and read
+# with `git` by .github/scripts/validate_pr.py, which comes from the BASE
+# commit. Nothing from the PR (title, branch, body) is interpolated into a
+# shell command; values go through `env:`.
+#
+# Rules: see the docstring of .github/scripts/validate_pr.py. In short:
+#   invalid submission  -> this check fails, the PR cannot merge
+#   valid but unusual   -> check passes, a maintainer merges it by hand
+#   valid and trusted   -> merged automatically (squash)
+#
+# Repository settings this relies on: "Allow auto-merge" enabled, and branch
+# protection on master requiring the status check "validate".
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    branches: [master]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: pr-validate-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Fetch the pull request as data (never checked out)
+        env:
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          git fetch --no-tags origin "refs/pull/${PR}/head:refs/pr/head"
+          if [ "$(git rev-parse refs/pr/head)" != "$HEAD_SHA" ]; then
+            echo "The pull request changed since this run started; a newer run will validate it."
+            exit 1
+          fi
+
+      - name: Look up the author
+        id: facts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          merged=$(gh api -X GET search/issues -f q="repo:${REPO} type:pr author:${AUTHOR} is:merged" --jq .total_count)
+          open=$(gh api -X GET search/issues -f q="repo:${REPO} type:pr author:${AUTHOR} is:open" --jq .total_count)
+          created=$(gh api "users/${AUTHOR}" --jq .created_at)
+          {
+            echo "merged=${merged}"
+            echo "open=${open}"
+            echo "created=${created}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Validate
+        id: validate
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          MERGED: ${{ steps.facts.outputs.merged }}
+          OPEN: ${{ steps.facts.outputs.open }}
+          CREATED: ${{ steps.facts.outputs.created }}
+        run: |
+          set +e
+          python3 .github/scripts/validate_pr.py \
+            --base "$BASE_SHA" --head "$HEAD_SHA" \
+            --merged-prs "$MERGED" --open-prs "$OPEN" --author-created-at "$CREATED" > result.json
+          set -e
+          # A crash leaves no usable result: fail closed (nothing is merged).
+          jq -e . result.json > /dev/null
+          {
+            echo "valid=$(jq -r .valid result.json)"
+            echo "eligible=$(jq -r .eligible result.json)"
+          } >> "$GITHUB_OUTPUT"
+          jq -r .markdown result.json | tee comment.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment on the pull request
+        if: always() && steps.validate.outputs.valid != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr comment "$PR_URL" --body-file comment.md --edit-last --create-if-none
+
+      - name: Fail if the submission is invalid
+        if: steps.validate.outputs.valid == 'false'
+        run: exit 1
+
+      - name: Merge automatically
+        if: steps.validate.outputs.eligible == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          # --match-head-commit: never merge anything but the commit validated above.
+          # Enabling auto-merge fails when nothing is required of the PR (no
+          # required checks yet); then merge directly.
+          gh pr merge "$PR_URL" --auto --squash --match-head-commit "$HEAD_SHA" \
+            || gh pr merge "$PR_URL" --squash --match-head-commit "$HEAD_SHA"
