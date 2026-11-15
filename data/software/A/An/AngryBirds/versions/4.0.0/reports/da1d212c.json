@@ -1,0 +1,10 @@
+{
+	"status": "gold",
+	"description": "The game plays well. I went from the title screen through the episode and level menus into the levels, flung birds with the mouse, knocked down a few towers and cleared a level. The physics, scoring and camera all behave as they should, and the music and sound effects play throughout. Quitting with Cmd+Q works, and the game starts again fine afterwards.\n\nThe only visible flaw is the splash screen at start-up: the Rovio logo is drawn into a corner of the full-screen window, with grey and black bars around it, for a few seconds. After that the game looks right. This version has no intro video, so nothing is missing there.\n\nLike other 32-bit Mac apps, it needs vm.mmap_min_addr set to 4096 or lower on the host (for example sudo sysctl vm.mmap_min_addr=4096). Without it the game doesn't start.\n\nTo install it, unpack the ZIP into /Applications. Darling's ditto can't extract ZIP files yet, so use unzip in the Darling shell.\n\nTested on Debian 13 with X11.",
+	"screenshots": [
+		"screenshot-0.jpg",
+		"screenshot-1.jpg",
+		"screenshot-2.jpg",
+		"screenshot-3.jpg"
+	]
+}
