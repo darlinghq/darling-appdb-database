@@ -53,6 +53,7 @@ PATTERNS = {
 }
 SHOT_NAME = re.compile(r"screenshot-\d+\.(png|jpg)")
 CATEGORY_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
+MAX_DISPLAY_NAME = 100
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 JPEG_MAGIC = b"\xff\xd8\xff"
@@ -175,6 +176,23 @@ def load_json(repo, entry, errors):
     return data
 
 
+def directory_name(display_name: str) -> str:
+    """The directory a software's display name is stored under: the name with
+    every character outside [A-Za-z0-9._-] removed ("Angry Birds" ->
+    "AngryBirds")."""
+    return re.sub(r"[^A-Za-z0-9._-]", "", display_name)
+
+
+def display_name_error(name, directory: str) -> Optional[str]:
+    if not isinstance(name, str) or not name or len(name) > MAX_DISPLAY_NAME:
+        return "name must be a string of 1 to %d characters" % MAX_DISPLAY_NAME
+    if name != name.strip() or "  " in name or any(ord(c) < 0x20 or ord(c) == 0x7f for c in name):
+        return "name must not have leading, trailing or repeated spaces or control characters"
+    if directory_name(name) != directory:
+        return "name %r must match the directory name %r once characters other than letters, digits, '.', '_' and '-' are removed" % (name, directory)
+    return None
+
+
 def unknown_keys(entry, data, allowed, errors):
     extra = sorted(set(data) - set(allowed))
     if extra:
@@ -260,8 +278,9 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
         if kind == "software":
             has_link_items = True
             unknown_keys(e, data, {"name", "links", "cpu", "free", "categories"}, res.errors)
-            if data.get("name") != m["name"]:
-                res.errors.append("%s: name %r must match the directory name %r" % (e.path, data.get("name"), m["name"]))
+            err = display_name_error(data.get("name"), m["name"])
+            if err:
+                res.errors.append("%s: %s" % (e.path, err))
             other = base_names.get(m["name"].lower())
             if other is not None:
                 res.errors.append("%s: name differs only by case from the existing software %r" % (e.path, other))

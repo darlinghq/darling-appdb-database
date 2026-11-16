@@ -195,6 +195,18 @@ class ValidatePR(unittest.TestCase):
     def test_name_must_match_directory(self):
         self.assertError(self.evaluate({SW + "/index.json": new_software("otherapp")}), "name")
 
+    def test_display_name_may_add_spaces_and_punctuation(self):
+        self.assertValid(self.evaluate({SW + "/index.json": new_software("new app")}))
+        self.assertValid(self.evaluate({SW + "/index.json": new_software("new·app!")}))
+
+    def test_display_name_must_reduce_to_the_directory_name(self):
+        self.assertError(self.evaluate({SW + "/index.json": new_software("New App")}), "name")
+        self.assertError(self.evaluate({SW + "/index.json": new_software("new app 2")}), "name")
+
+    def test_display_name_spacing_and_length(self):
+        for bad in ("", " newapp", "newapp ", "new  app", "new\tapp", "new\napp", "newapp" + "!" * 100):
+            self.assertError(self.evaluate({SW + "/index.json": new_software(bad)}), "name")
+
     def test_wrong_shard_directory_is_an_error(self):
         self.assertError(self.evaluate({"data/software/x/yy/newapp/index.json": new_software()}), "shard")
 
