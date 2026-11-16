@@ -38,7 +38,9 @@ MAX_DESCRIPTION = 5000
 MIN_ACCOUNT_AGE_DAYS = 7
 MAX_OPEN_PRS = 5
 
-CPUS = {"x86-64", "i386", "arm64"}
+# Keep in sync with cpuArchitectures in darling-appdb-backend (validation.go)
+# and CPU_ARCHITECTURES in darling-appdb-frontend (src/app/category.service.ts).
+CPUS = {"x86-64", "i386", "arm64", "ppc"}
 STATUSES = {"platinum", "gold", "silver", "bronze", "garbage"}
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "rb.gy", "cutt.ly", "buff.ly", "shorturl.at", "tiny.cc"}
 
@@ -292,8 +294,8 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
                     if not CATEGORY_ID.fullmatch(c) or not exists_in(repo, mb, "data/categories/%s.json" % c):
                         res.errors.append("%s: unknown category %r" % (e.path, c))
             cpu = data.get("cpu")
-            if cpu is not None and (not isinstance(cpu, list) or not all(c in CPUS for c in cpu if isinstance(c, str)) or not all(isinstance(c, str) for c in cpu)):
-                res.errors.append("%s: unknown cpu in %s" % (e.path, clean(cpu)))
+            if cpu is not None and (not isinstance(cpu, list) or not all(isinstance(c, str) and c in CPUS for c in cpu)):
+                res.errors.append("%s: cpu must be a list of %s; got %s" % (e.path, ", ".join(sorted(CPUS)), clean(cpu)))
             if data.get("free") is not None and not isinstance(data["free"], bool):
                 res.errors.append("%s: free must be true or false" % e.path)
             links = data.get("links")
