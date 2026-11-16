@@ -1,0 +1,4 @@
+{
+	"status": "bronze",
+	"description": "Essentially works, with the following problems: 1) Windows cannot be closed after they lose focus as the window decorations disappear. 2) Sometimes Classic Finder does not respond when trying to browse to system folders. 3) In general, Classic Finder runs very slowly."
+}
