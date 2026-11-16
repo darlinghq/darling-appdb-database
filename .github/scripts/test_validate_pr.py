@@ -217,6 +217,13 @@ class ValidatePR(unittest.TestCase):
         self.assertError(self.evaluate({SW + "/index.json": new_software(categories=["nope"])}), "categor")
         self.assertError(self.evaluate({SW + "/index.json": new_software(cpu=["z80"])}), "cpu")
 
+    def test_every_known_cpu_is_accepted(self):
+        self.assertValid(self.evaluate({SW + "/index.json": new_software(cpu=["x86-64", "i386", "arm64", "ppc"])}))
+
+    def test_cpu_must_be_a_list_of_known_names(self):
+        for bad in ("x86-64", ["x86_64"], ["ppc", 1], ["ppc", None], {"x86-64": True}):
+            self.assertError(self.evaluate({SW + "/index.json": new_software(cpu=bad)}), "cpu")
+
     def test_unknown_keys_are_errors(self):
         self.assertError(self.evaluate({SW + "/index.json": new_software(admin=True)}), "unknown")
 
