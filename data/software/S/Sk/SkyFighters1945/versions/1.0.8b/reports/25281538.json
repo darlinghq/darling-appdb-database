@@ -1,0 +1,11 @@
+{
+    "status": "platinum",
+    "description": "SkyFighters 1945 is a 3D World War II flight game, and version 1.0.8b runs very well in Darling. I got through the pilot sign-in, picked the \"Fun Fly\" mission, took off and flew around the airfield and hills with the mouse and keyboard, and I didn't run into any problems.\n\n- It starts without trouble and runs as a time-limited trial without registration: the Order dialog has an Okay button, and I didn't enter anything.\n- The sign-in and mission windows look right, and the terrain, clouds, cockpit, propeller and aircraft are textured and drawn as they should be.\n- Throttle, guns, mouse flying and the `p` pause key all responded. I crashed into a hill once, got the \"Mission Failure\" window, and could restart the mission.\n- There is sound while flying: the engine runs continuously and the guns are loud.\n- Cmd+Q (the Super key on this setup) quits it cleanly, and a second launch works.\n\nI only flew one mission and didn't try the online features or the Mission Builder.\n\n**Installing:** the download page lists the package as version 1.0.5, but it also contains this 1.0.8b build in its Add-ons folder, which already includes the Snow Leopard fix and updated textures. Unpack that zip into `/Applications`, for example with `ditto -x -k <zip> /Applications`, and start the app. It is a 32-bit game, so you need `sudo sysctl vm.mmap_min_addr=4096` first (most distributions default to a higher value).\n\nTested on a recent Arch Linux machine with X11.",
+    "screenshots": [
+        "screenshot-0.jpg",
+        "screenshot-1.jpg",
+        "screenshot-2.jpg",
+        "screenshot-3.jpg",
+        "screenshot-4.jpg"
+    ]
+}
