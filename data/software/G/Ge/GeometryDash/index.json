@@ -1,0 +1,14 @@
+{
+	"name": "GeometryDash",
+	"links": {
+		"product": "https://store.steampowered.com/app/322170/Geometry_Dash/"
+	},
+	"cpu": [
+		"x86-64",
+		"arm64"
+	],
+	"free": false,
+	"categories": [
+		"games"
+	]
+}
