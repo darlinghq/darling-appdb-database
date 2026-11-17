@@ -1,0 +1,15 @@
+{
+	"name": "Steam",
+	"links": {
+		"product": "https://store.steampowered.com/about/"
+	},
+	"cpu": [
+		"x86-64",
+		"arm64"
+	],
+	"free": true,
+	"categories": [
+		"games",
+		"system"
+	]
+}
