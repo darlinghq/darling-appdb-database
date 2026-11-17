@@ -1,0 +1,13 @@
+{
+	"name": "AgeOfEmpiresII-DefinitiveEdition",
+	"links": {
+		"product": "https://store.steampowered.com/app/813780/Age_of_Empires_II_Definitive_Edition/"
+	},
+	"cpu": [
+		"arm64"
+	],
+	"free": false,
+	"categories": [
+		"games"
+	]
+}
