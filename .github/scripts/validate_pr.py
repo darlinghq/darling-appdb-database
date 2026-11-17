@@ -55,7 +55,10 @@ PATTERNS = {
 }
 SHOT_NAME = re.compile(r"screenshot-\d+\.(png|jpg)")
 CATEGORY_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
+# Keep in sync with maxSoftwareNameLength / maxVersionLength in
+# darling-appdb-backend (validation.go).
 MAX_DISPLAY_NAME = 100
+MAX_VERSION = 50
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
 JPEG_MAGIC = b"\xff\xd8\xff"
@@ -185,11 +188,35 @@ def directory_name(display_name: str) -> str:
     return re.sub(r"[^A-Za-z0-9._-]", "", display_name)
 
 
+def version_directory(version: str) -> str:
+    """The directory a version string is stored under: every run of characters
+    outside [A-Za-z0-9._-] becomes one '_', and leading/trailing '_' are
+    dropped ("1.0 (build 5)" -> "1.0_build_5"). Must match versionDirectoryName
+    in darling-appdb-backend (validation.go)."""
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", version).strip("_")
+
+
+def display_text_error(field: str, value, max_len: int) -> Optional[str]:
+    if not isinstance(value, str) or not value or len(value) > max_len:
+        return "%s must be a string of 1 to %d characters" % (field, max_len)
+    if value != value.strip() or "  " in value or any(ord(c) < 0x20 or ord(c) == 0x7f for c in value):
+        return "%s must not have leading, trailing or repeated spaces or control characters" % field
+    return None
+
+
+def version_error(version, directory: str) -> Optional[str]:
+    err = display_text_error("version", version, MAX_VERSION)
+    if err:
+        return err
+    if version_directory(version) != directory:
+        return "version %r must be stored in the directory %r, not %r" % (version, version_directory(version), directory)
+    return None
+
+
 def display_name_error(name, directory: str) -> Optional[str]:
-    if not isinstance(name, str) or not name or len(name) > MAX_DISPLAY_NAME:
-        return "name must be a string of 1 to %d characters" % MAX_DISPLAY_NAME
-    if name != name.strip() or "  " in name or any(ord(c) < 0x20 or ord(c) == 0x7f for c in name):
-        return "name must not have leading, trailing or repeated spaces or control characters"
+    err = display_text_error("name", name, MAX_DISPLAY_NAME)
+    if err:
+        return err
     if directory_name(name) != directory:
         return "name %r must match the directory name %r once characters other than letters, digits, '.', '_' and '-' are removed" % (name, directory)
     return None
@@ -312,8 +339,9 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
         elif kind == "version":
             has_link_items = True
             unknown_keys(e, data, {"version", "download", "issues"}, res.errors)
-            if data.get("version") != m["ver"]:
-                res.errors.append("%s: version %r must match the directory name %r" % (e.path, data.get("version"), m["ver"]))
+            err = version_error(data.get("version"), m["ver"])
+            if err:
+                res.errors.append("%s: %s" % (e.path, err))
             if parse_url(data.get("download")) is None:
                 res.errors.append("%s: download is not an http(s) URL" % e.path)
             else:

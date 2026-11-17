@@ -236,6 +236,15 @@ class ValidatePR(unittest.TestCase):
     def test_version_field_must_match_directory(self):
         self.assertError(self.evaluate({SW + "/index.json": new_software(), SW + "/versions/1.1/index.json": new_version("2.0")}), "version")
 
+    def test_version_may_be_display_text_stored_under_its_directory(self):
+        self.assertValid(self.evaluate({SW + "/index.json": new_software(), SW + "/versions/1.0_build_5/index.json": new_version("1.0 (build 5)")}))
+        self.assertError(self.evaluate({SW + "/index.json": new_software(), SW + "/versions/1.0build5/index.json": new_version("1.0 (build 5)")}), "1.0_build_5")
+
+    def test_version_spacing_and_length(self):
+        for bad in ("1.0 ", "1.0  b", "1.0\tb", "1" * (v.MAX_VERSION + 1)):
+            d = v.version_directory(bad) or "x"
+            self.assertError(self.evaluate({SW + "/index.json": new_software(), SW + "/versions/%s/index.json" % d: new_version(bad)}), "version")
+
     def test_bad_report_status_and_empty_description_are_errors(self):
         base = PC + "/versions/0.6.5a/reports/ab12cd34.json"
         self.assertError(self.evaluate({base: new_report(status="shiny")}), "status")
