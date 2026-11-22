@@ -1,0 +1,7 @@
+{
+	"status": "silver",
+	"description": "I froze on me once on the initial video screen. Audio works, keyboard controls work, controllers was however not detected. Some texts only appears as black squares.\n\nInstallation is a bit problematic - the game is wrapped like a matroska. It's a DMG, which contains a PKG, which triggers an AppleScript to ask you where to copy the game. But Darling doesn't support AppleScript yet...",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}

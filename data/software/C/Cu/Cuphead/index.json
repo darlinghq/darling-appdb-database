@@ -1,0 +1,13 @@
+{
+	"name": "Cuphead",
+	"links": {
+		"product": "https://www.gog.com/en/game/cuphead"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true,
+	"categories": [
+		"games"
+	]
+}
