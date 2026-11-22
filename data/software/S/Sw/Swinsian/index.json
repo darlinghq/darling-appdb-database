@@ -1,0 +1,13 @@
+{
+	"name": "Swinsian",
+	"links": {
+		"product": "https://swinsian.com/"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": false,
+	"categories": [
+		"audio"
+	]
+}
