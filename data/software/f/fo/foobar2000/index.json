@@ -1,0 +1,13 @@
+{
+	"name": "foobar2000",
+	"links": {
+		"product": "https://www.foobar2000.org/"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": false,
+	"categories": [
+		"audio"
+	]
+}
