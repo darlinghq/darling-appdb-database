@@ -1,0 +1,14 @@
+{
+	"name": "Xcode Command Line Tools",
+	"links": {
+		"product": "https://developer.apple.com/"
+	},
+	"cpu": [
+		"x86-64",
+        "arm64"
+	],
+	"free": true,
+	"categories": [
+		"developer-tools"
+	]
+}
