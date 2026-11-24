@@ -1,0 +1,8 @@
+{
+	"status": "gold",
+	"description": "The game works well, including game controller (in D mode, X is a bit buggy). Sound is also OK. I didn't see any graphics issues.\n\nInstallation is a bit problematic - the game is wrapped like a matroska. It's a DMG, which contains a PKG, which triggers an AppleScript to ask you where to copy the game. But Darling doesn't support AppleScript yet...",
+	"screenshots": [
+		"screenshot-0.jpg",
+		"screenshot-1.jpg"
+	]
+}
