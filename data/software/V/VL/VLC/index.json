@@ -1,0 +1,13 @@
+{
+	"name": "VLC",
+	"links": {
+		"product": "https://www.videolan.org/"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true,
+	"categories": [
+		"video"
+	]
+}
