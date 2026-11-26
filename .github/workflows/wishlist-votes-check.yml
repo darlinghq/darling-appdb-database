@@ -1,0 +1,21 @@
+name: wishlist-votes-check
+
+# Check only: validates every data/wishlist/**/votes.txt after a push to
+# master. It never writes, pushes, comments or reverts, and uses no secrets.
+
+on:
+  push:
+    branches: [master]
+    paths: ['data/wishlist/**']
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: python3 .github/scripts/check_votes.py

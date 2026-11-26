@@ -35,6 +35,8 @@ MAX_TOTAL_BYTES = 1_000_000
 MAX_SCREENSHOT_BYTES = 150 * 1024
 MAX_SCREENSHOTS = 5
 MAX_DESCRIPTION = 5000
+WISHLIST_MAX_DESCRIPTION = 80
+MAX_WISHLIST_NAME = 100
 MIN_ACCOUNT_AGE_DAYS = 7
 MAX_OPEN_PRS = 5
 
@@ -45,6 +47,10 @@ STATUSES = {"platinum", "gold", "silver", "bronze", "garbage"}
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "rb.gy", "cutt.ly", "buff.ly", "shorturl.at", "tiny.cc"}
 
 NAME = r"[A-Za-z0-9][A-Za-z0-9._-]*"
+# Wishlist directories are slugs; the backend loads nothing else.
+WISHLIST_SLUG = r"[a-z0-9][a-z0-9-]*"
+# Any wishlist entry index, whatever its directory name (to report bad names).
+WISHLIST_ANY_INDEX = re.compile(r"data/wishlist/[^/]+/[^/]+/[^/]+/index\.json")
 SW = r"data/software/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)" % NAME
 VER = r"/versions/(?P<ver>%s)" % NAME
 PATTERNS = {
@@ -52,8 +58,11 @@ PATTERNS = {
     "version": re.compile(SW + VER + r"/index\.json"),
     "report": re.compile(SW + VER + r"/reports/(?P<rid>[0-9a-f]{8})\.json"),
     "shot": re.compile(SW + VER + r"/reports/(?P<rid>[0-9a-f]{8})/(?P<file>screenshot-\d+\.(?:png|jpg))"),
+    "wishlist": re.compile(r"data/wishlist/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)/index\.json" % WISHLIST_SLUG),
 }
 SHOT_NAME = re.compile(r"screenshot-\d+\.(png|jpg)")
+# Wishlist link labels are slugified short labels (same rule as the backend).
+WISHLIST_LINK_LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 CATEGORY_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
 # Keep in sync with maxSoftwareNameLength / maxVersionLength in
 # darling-appdb-backend (validation.go).
@@ -250,6 +259,9 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
     items = []  # (kind, match, entry)
     total = 0
     for e in entries:
+        if e.path.startswith("data/wishlist/") and e.path.rsplit("/", 1)[-1] == "votes.txt":
+            res.errors.append("%s: votes are recorded by the wishlist app, not in pull requests" % e.path)
+            continue
         if e.status != "A":
             res.reasons.append("%s: modifies or deletes an existing file" % e.path)
             continue
@@ -263,7 +275,11 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
                 items.append((kind, m, e))
                 break
         else:
-            res.reasons.append("%s: outside the software data layout" % e.path)
+            if WISHLIST_ANY_INDEX.fullmatch(e.path):
+                res.errors.append("%s: wishlist directory name must be lowercase letters, digits and hyphens "
+                                  "(data/wishlist/<s1>/<s2>/<slug>/index.json)" % e.path)
+            else:
+                res.reasons.append("%s: outside the software data layout" % e.path)
     if total > MAX_TOTAL_BYTES:
         res.reasons.append("the new files total %d bytes (automatic merging is limited to %d)" % (total, MAX_TOTAL_BYTES))
 
@@ -286,7 +302,8 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
     for kind, m, e in items:
         if (m["s1"], m["s2"]) != expected_shard(m["name"]):
             s1, s2 = expected_shard(m["name"])
-            res.errors.append("%s: wrong shard directory (expected data/software/%s/%s/%s)" % (e.path, s1, s2, m["name"]))
+            root = "wishlist" if kind == "wishlist" else "software"
+            res.errors.append("%s: wrong shard directory (expected data/%s/%s/%s/%s)" % (e.path, root, s1, s2, m["name"]))
             continue
 
         if kind == "shot":
@@ -335,6 +352,28 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
                             res.errors.append("%s: links.%s is not an http(s) URL" % (e.path, clean(k)))
                         else:
                             link_urls.append((e.path, url))
+
+        elif kind == "wishlist":
+            has_link_items = True
+            unknown_keys(e, data, {"name", "description", "links"}, res.errors)
+            name = data.get("name")
+            if not isinstance(name, str) or not name.strip() or len(name) > MAX_WISHLIST_NAME:
+                res.errors.append("%s: name is required (at most %d characters)" % (e.path, MAX_WISHLIST_NAME))
+            desc = data.get("description")
+            if desc is not None and (not isinstance(desc, str) or len(desc) > WISHLIST_MAX_DESCRIPTION):
+                res.errors.append("%s: description must be text of at most %d characters" % (e.path, WISHLIST_MAX_DESCRIPTION))
+            links = data.get("links")
+            if not isinstance(links, dict) or not links:
+                res.errors.append("%s: links is required and must be a non-empty object" % e.path)
+            else:
+                for k, url in links.items():
+                    if not WISHLIST_LINK_LABEL.fullmatch(k):
+                        res.errors.append("%s: invalid link label %s (lowercase letters, digits and hyphens, "
+                                          "at most 32 characters)" % (e.path, clean(k)))
+                    if parse_url(url) is None:
+                        res.errors.append("%s: links.%s is not an http(s) URL" % (e.path, clean(k)))
+                    else:
+                        link_urls.append((e.path, url))
 
         elif kind == "version":
             has_link_items = True
