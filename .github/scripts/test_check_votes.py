@@ -70,6 +70,19 @@ class MainTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertTrue(out.startswith("data/wishlist/a/votes.txt: "))
 
+    def test_symlinked_votes_file_is_skipped(self):
+        with tempfile.TemporaryDirectory() as d, tempfile.TemporaryDirectory() as outside:
+            root = Path(d)
+            target = Path(outside) / "votes.txt"
+            target.write_text("bob\nann\n")  # would be flagged as unsorted
+            entry = root / "data" / "wishlist" / "a" / "_" / "a"
+            entry.mkdir(parents=True)
+            (entry / "votes.txt").symlink_to(target)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                code = check_votes.main(root)
+            self.assertEqual((code, out.getvalue()), (0, ""))
+
 
 if __name__ == "__main__":
     unittest.main()

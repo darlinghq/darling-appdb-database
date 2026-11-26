@@ -298,6 +298,16 @@ class ValidatePR(unittest.TestCase):
         r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(links={"product": "javascript:alert(1)"})})
         self.assertError(r, "links.product")
 
+    def test_wishlist_uppercase_or_dotted_directory_is_error(self):
+        r = self.evaluate({"data/wishlist/F/Fo/Foo.Bar/index.json": new_wishlist()})
+        self.assertFalse(r.valid)
+        self.assertError(r, "wishlist directory name")
+
+    def test_wishlist_lowercase_hyphenated_directory_is_valid(self):
+        r = self.evaluate({"data/wishlist/f/fo/foo-bar/index.json": new_wishlist()})
+        self.assertValid(r)
+        self.assertTrue(r.eligible)
+
     def test_modifying_wishlist_index_needs_review_but_is_valid(self):
         r = self.evaluate({WL + "/index.json": new_wishlist()})
         self.assertReason(r, "modifies or deletes")

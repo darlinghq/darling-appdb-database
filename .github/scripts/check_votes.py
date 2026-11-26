@@ -58,8 +58,8 @@ def main(root=None) -> int:
         return 0
     found = False
     for path in sorted(base.rglob("votes.txt")):
-        if not path.is_file():
-            continue
+        if path.is_symlink() or not path.is_file():
+            continue  # symlinks could point outside the repository
         text = path.read_bytes().decode("utf-8", errors="replace")
         for problem in check_votes_text(text):
             print(f"{path.relative_to(root).as_posix()}: {problem}")

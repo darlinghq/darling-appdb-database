@@ -44,6 +44,8 @@ STATUSES = {"platinum", "gold", "silver", "bronze", "garbage"}
 SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "rb.gy", "cutt.ly", "buff.ly", "shorturl.at", "tiny.cc"}
 
 NAME = r"[A-Za-z0-9][A-Za-z0-9._-]*"
+# Wishlist directories are slugs; the backend loads nothing else.
+WISHLIST_SLUG = r"[a-z0-9][a-z0-9-]*"
 SW = r"data/software/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)" % NAME
 VER = r"/versions/(?P<ver>%s)" % NAME
 PATTERNS = {
@@ -51,7 +53,7 @@ PATTERNS = {
     "version": re.compile(SW + VER + r"/index\.json"),
     "report": re.compile(SW + VER + r"/reports/(?P<rid>[0-9a-f]{8})\.json"),
     "shot": re.compile(SW + VER + r"/reports/(?P<rid>[0-9a-f]{8})/(?P<file>screenshot-\d+\.(?:png|jpg))"),
-    "wishlist": re.compile(r"data/wishlist/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)/index\.json" % NAME),
+    "wishlist": re.compile(r"data/wishlist/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)/index\.json" % WISHLIST_SLUG),
 }
 SHOT_NAME = re.compile(r"screenshot-\d+\.(png|jpg)")
 CATEGORY_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
@@ -221,7 +223,11 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
                 items.append((kind, m, e))
                 break
         else:
-            res.reasons.append("%s: outside the software data layout" % e.path)
+            if e.path.startswith("data/wishlist/"):
+                res.errors.append("%s: wishlist directory name must be lowercase letters, digits and hyphens "
+                                  "(data/wishlist/<s1>/<s2>/<slug>/index.json)" % e.path)
+            else:
+                res.reasons.append("%s: outside the software data layout" % e.path)
     if total > MAX_TOTAL_BYTES:
         res.reasons.append("the new files total %d bytes (automatic merging is limited to %d)" % (total, MAX_TOTAL_BYTES))
 
