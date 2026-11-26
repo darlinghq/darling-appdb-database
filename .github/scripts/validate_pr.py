@@ -46,6 +46,8 @@ SHORTENERS = {"bit.ly", "tinyurl.com", "t.co", "goo.gl", "is.gd", "ow.ly", "rb.g
 NAME = r"[A-Za-z0-9][A-Za-z0-9._-]*"
 # Wishlist directories are slugs; the backend loads nothing else.
 WISHLIST_SLUG = r"[a-z0-9][a-z0-9-]*"
+# Any wishlist entry index, whatever its directory name (to report bad names).
+WISHLIST_ANY_INDEX = re.compile(r"data/wishlist/[^/]+/[^/]+/[^/]+/index\.json")
 SW = r"data/software/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)" % NAME
 VER = r"/versions/(?P<ver>%s)" % NAME
 PATTERNS = {
@@ -223,7 +225,7 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
                 items.append((kind, m, e))
                 break
         else:
-            if e.path.startswith("data/wishlist/"):
+            if WISHLIST_ANY_INDEX.fullmatch(e.path):
                 res.errors.append("%s: wishlist directory name must be lowercase letters, digits and hyphens "
                                   "(data/wishlist/<s1>/<s2>/<slug>/index.json)" % e.path)
             else:

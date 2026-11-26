@@ -303,6 +303,10 @@ class ValidatePR(unittest.TestCase):
         self.assertFalse(r.valid)
         self.assertError(r, "wishlist directory name")
 
+    def test_other_file_under_wishlist_still_needs_review(self):
+        r = self.evaluate({"data/wishlist/README.md": b"notes\n"})
+        self.assertReason(r, "outside the software data layout")
+
     def test_wishlist_lowercase_hyphenated_directory_is_valid(self):
         r = self.evaluate({"data/wishlist/f/fo/foo-bar/index.json": new_wishlist()})
         self.assertValid(r)
