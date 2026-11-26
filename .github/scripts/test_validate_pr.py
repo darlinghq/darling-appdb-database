@@ -311,7 +311,7 @@ class ValidatePR(unittest.TestCase):
         path = "data/wishlist/n/ne/newwish/index.json"
         self.assertError(self.evaluate({path: new_wishlist(name="")}), "name")
         self.assertError(self.evaluate({path: new_wishlist(name="x" * 101)}), "name")
-        self.assertError(self.evaluate({path: new_wishlist(description="x" * (v.MAX_DESCRIPTION + 1))}), "description")
+        self.assertError(self.evaluate({path: new_wishlist(description="x" * (v.WISHLIST_MAX_DESCRIPTION + 1))}), "description")
 
     def test_wishlist_bad_link_is_error(self):
         r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(links={"product": "javascript:alert(1)"})})

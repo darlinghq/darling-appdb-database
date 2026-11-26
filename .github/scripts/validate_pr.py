@@ -35,6 +35,7 @@ MAX_TOTAL_BYTES = 1_000_000
 MAX_SCREENSHOT_BYTES = 150 * 1024
 MAX_SCREENSHOTS = 5
 MAX_DESCRIPTION = 5000
+WISHLIST_MAX_DESCRIPTION = 80
 MAX_WISHLIST_NAME = 100
 MIN_ACCOUNT_AGE_DAYS = 7
 MAX_OPEN_PRS = 5
@@ -311,8 +312,8 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
             if not isinstance(name, str) or not name.strip() or len(name) > MAX_WISHLIST_NAME:
                 res.errors.append("%s: name is required (at most %d characters)" % (e.path, MAX_WISHLIST_NAME))
             desc = data.get("description")
-            if desc is not None and (not isinstance(desc, str) or len(desc) > MAX_DESCRIPTION):
-                res.errors.append("%s: description must be text of at most %d characters" % (e.path, MAX_DESCRIPTION))
+            if desc is not None and (not isinstance(desc, str) or len(desc) > WISHLIST_MAX_DESCRIPTION):
+                res.errors.append("%s: description must be text of at most %d characters" % (e.path, WISHLIST_MAX_DESCRIPTION))
             links = data.get("links")
             if not isinstance(links, dict) or not links:
                 res.errors.append("%s: links is required and must be a non-empty object" % e.path)
