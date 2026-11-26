@@ -26,7 +26,7 @@ def j(obj):
 
 BASE = {
     "data/categories/productivity.json": j({"name": {"en": "Productivity"}}),
-    WL + "/index.json": j({"name": "Wish App", "description": "d", "categories": ["productivity"]}),
+    WL + "/index.json": j({"name": "Wish App", "description": "d", "links": {"homepage": "https://example.com"}}),
     WL + "/votes.txt": b"a\nb\n",
     PC + "/index.json": j({"name": "pearCalc", "links": {"product": "http://www.pearworks.com/"},
                            "cpu": ["x86-64"], "free": True, "categories": ["productivity"]}),
@@ -43,8 +43,7 @@ def new_software(name="newapp", **over):
 
 
 def new_wishlist(**over):
-    d = {"name": "Wish App", "description": "I would like this", "links": {"product": "https://example.com"},
-         "categories": ["productivity"]}
+    d = {"name": "Wish App", "description": "I would like this", "links": {"homepage": "https://example.com"}}
     d.update(over)
     return j(d)
 
@@ -278,10 +277,30 @@ class ValidatePR(unittest.TestCase):
         self.assertError(r, "unknown field")
         self.assertFalse(r.valid)
 
-    def test_wishlist_missing_category_is_error(self):
-        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(categories=["nope"])})
-        self.assertError(r, "unknown category")
+    def test_wishlist_categories_is_unknown_field_error(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(categories=["productivity"])})
+        self.assertError(r, "unknown field")
         self.assertFalse(r.valid)
+
+    def test_wishlist_links_required_and_non_empty(self):
+        path = "data/wishlist/n/ne/newwish/index.json"
+        self.assertError(self.evaluate({path: new_wishlist(links={})}), "links")
+        d = json.loads(new_wishlist())
+        del d["links"]
+        self.assertError(self.evaluate({path: j(d)}), "links")
+        self.assertError(self.evaluate({path: new_wishlist(links=["https://example.com"])}), "links")
+
+    def test_wishlist_bad_link_label_is_error(self):
+        path = "data/wishlist/n/ne/newwish/index.json"
+        for key in ["Home", "-a", "a b", "", "a" * 33]:
+            r = self.evaluate({path: new_wishlist(links={key: "https://example.com"})})
+            self.assertError(r, "link label")
+            self.assertFalse(r.valid)
+
+    def test_wishlist_valid_labelled_links_accepted(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json":
+                           new_wishlist(links={"homepage": "https://example.com", "source-code": "https://example.com/s", "a" * 32: "http://x.org"})})
+        self.assertValid(r)
 
     def test_wishlist_wrong_shard_is_error(self):
         r = self.evaluate({"data/wishlist/x/xx/newwish/index.json": new_wishlist()})

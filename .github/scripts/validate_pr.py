@@ -58,6 +58,8 @@ PATTERNS = {
     "wishlist": re.compile(r"data/wishlist/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)/index\.json" % WISHLIST_SLUG),
 }
 SHOT_NAME = re.compile(r"screenshot-\d+\.(png|jpg)")
+# Wishlist link labels are slugified short labels (same rule as the backend).
+WISHLIST_LINK_LABEL = re.compile(r"[a-z0-9][a-z0-9-]{0,31}")
 CATEGORY_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
 
 PNG_MAGIC = b"\x89PNG\r\n\x1a\n"
@@ -304,31 +306,25 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
 
         elif kind == "wishlist":
             has_link_items = True
-            unknown_keys(e, data, {"name", "description", "links", "categories"}, res.errors)
+            unknown_keys(e, data, {"name", "description", "links"}, res.errors)
             name = data.get("name")
             if not isinstance(name, str) or not name.strip() or len(name) > MAX_WISHLIST_NAME:
                 res.errors.append("%s: name is required (at most %d characters)" % (e.path, MAX_WISHLIST_NAME))
             desc = data.get("description")
             if desc is not None and (not isinstance(desc, str) or len(desc) > MAX_DESCRIPTION):
                 res.errors.append("%s: description must be text of at most %d characters" % (e.path, MAX_DESCRIPTION))
-            cats = data.get("categories")
-            if cats is not None:
-                if not isinstance(cats, list) or not all(isinstance(c, str) for c in cats):
-                    res.errors.append("%s: categories must be a list" % e.path)
-                else:
-                    for c in cats:
-                        if not CATEGORY_ID.fullmatch(c) or not exists_in(repo, mb, "data/categories/%s.json" % c):
-                            res.errors.append("%s: unknown category %r" % (e.path, c))
             links = data.get("links")
-            if links is not None:
-                if not isinstance(links, dict):
-                    res.errors.append("%s: links must be an object" % e.path)
-                else:
-                    for k, url in links.items():
-                        if parse_url(url) is None:
-                            res.errors.append("%s: links.%s is not an http(s) URL" % (e.path, clean(k)))
-                        else:
-                            link_urls.append((e.path, url))
+            if not isinstance(links, dict) or not links:
+                res.errors.append("%s: links is required and must be a non-empty object" % e.path)
+            else:
+                for k, url in links.items():
+                    if not WISHLIST_LINK_LABEL.fullmatch(k):
+                        res.errors.append("%s: invalid link label %s (lowercase letters, digits and hyphens, "
+                                          "at most 32 characters)" % (e.path, clean(k)))
+                    if parse_url(url) is None:
+                        res.errors.append("%s: links.%s is not an http(s) URL" % (e.path, clean(k)))
+                    else:
+                        link_urls.append((e.path, url))
 
         elif kind == "version":
             has_link_items = True
