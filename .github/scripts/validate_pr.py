@@ -35,6 +35,7 @@ MAX_TOTAL_BYTES = 1_000_000
 MAX_SCREENSHOT_BYTES = 150 * 1024
 MAX_SCREENSHOTS = 5
 MAX_DESCRIPTION = 5000
+MAX_WISHLIST_NAME = 100
 MIN_ACCOUNT_AGE_DAYS = 7
 MAX_OPEN_PRS = 5
 
@@ -50,6 +51,7 @@ PATTERNS = {
     "version": re.compile(SW + VER + r"/index\.json"),
     "report": re.compile(SW + VER + r"/reports/(?P<rid>[0-9a-f]{8})\.json"),
     "shot": re.compile(SW + VER + r"/reports/(?P<rid>[0-9a-f]{8})/(?P<file>screenshot-\d+\.(?:png|jpg))"),
+    "wishlist": re.compile(r"data/wishlist/(?P<s1>[^/]+)/(?P<s2>[^/]+)/(?P<name>%s)/index\.json" % NAME),
 }
 SHOT_NAME = re.compile(r"screenshot-\d+\.(png|jpg)")
 CATEGORY_ID = re.compile(r"[a-z0-9][a-z0-9-]*")
@@ -203,6 +205,9 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
     items = []  # (kind, match, entry)
     total = 0
     for e in entries:
+        if e.path.startswith("data/wishlist/") and e.path.rsplit("/", 1)[-1] == "votes.txt":
+            res.errors.append("%s: votes are recorded by the wishlist app, not in pull requests" % e.path)
+            continue
         if e.status != "A":
             res.reasons.append("%s: modifies or deletes an existing file" % e.path)
             continue
@@ -239,7 +244,8 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
     for kind, m, e in items:
         if (m["s1"], m["s2"]) != expected_shard(m["name"]):
             s1, s2 = expected_shard(m["name"])
-            res.errors.append("%s: wrong shard directory (expected data/software/%s/%s/%s)" % (e.path, s1, s2, m["name"]))
+            root = "wishlist" if kind == "wishlist" else "software"
+            res.errors.append("%s: wrong shard directory (expected data/%s/%s/%s/%s)" % (e.path, root, s1, s2, m["name"]))
             continue
 
         if kind == "shot":
@@ -277,6 +283,34 @@ def evaluate(repo: str, base: str, head: str, facts: dict, now=None) -> Result:
                 res.errors.append("%s: unknown cpu in %s" % (e.path, clean(cpu)))
             if data.get("free") is not None and not isinstance(data["free"], bool):
                 res.errors.append("%s: free must be true or false" % e.path)
+            links = data.get("links")
+            if links is not None:
+                if not isinstance(links, dict):
+                    res.errors.append("%s: links must be an object" % e.path)
+                else:
+                    for k, url in links.items():
+                        if parse_url(url) is None:
+                            res.errors.append("%s: links.%s is not an http(s) URL" % (e.path, clean(k)))
+                        else:
+                            link_urls.append((e.path, url))
+
+        elif kind == "wishlist":
+            has_link_items = True
+            unknown_keys(e, data, {"name", "description", "links", "categories"}, res.errors)
+            name = data.get("name")
+            if not isinstance(name, str) or not name.strip() or len(name) > MAX_WISHLIST_NAME:
+                res.errors.append("%s: name is required (at most %d characters)" % (e.path, MAX_WISHLIST_NAME))
+            desc = data.get("description")
+            if desc is not None and (not isinstance(desc, str) or len(desc) > MAX_DESCRIPTION):
+                res.errors.append("%s: description must be text of at most %d characters" % (e.path, MAX_DESCRIPTION))
+            cats = data.get("categories")
+            if cats is not None:
+                if not isinstance(cats, list) or not all(isinstance(c, str) for c in cats):
+                    res.errors.append("%s: categories must be a list" % e.path)
+                else:
+                    for c in cats:
+                        if not CATEGORY_ID.fullmatch(c) or not exists_in(repo, mb, "data/categories/%s.json" % c):
+                            res.errors.append("%s: unknown category %r" % (e.path, c))
             links = data.get("links")
             if links is not None:
                 if not isinstance(links, dict):

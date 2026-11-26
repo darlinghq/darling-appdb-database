@@ -17,6 +17,7 @@ JPG = b"\xff\xd8\xff\xe0" + b"\0" * 32
 GOOD = dict(merged_prs=2, created_at=OLD, open_prs=1)
 SW = "data/software/n/ne/newapp"
 PC = "data/software/p/pe/pearcalc"
+WL = "data/wishlist/w/wi/wishapp"
 
 
 def j(obj):
@@ -25,6 +26,8 @@ def j(obj):
 
 BASE = {
     "data/categories/productivity.json": j({"name": {"en": "Productivity"}}),
+    WL + "/index.json": j({"name": "Wish App", "description": "d", "categories": ["productivity"]}),
+    WL + "/votes.txt": b"a\nb\n",
     PC + "/index.json": j({"name": "pearCalc", "links": {"product": "http://www.pearworks.com/"},
                            "cpu": ["x86-64"], "free": True, "categories": ["productivity"]}),
     PC + "/versions/0.6.5a/index.json": j({"version": "0.6.5a", "download": "http://www.pearworks.com/a.zip", "issues": [724]}),
@@ -35,6 +38,13 @@ BASE = {
 def new_software(name="newapp", **over):
     d = {"name": name, "links": {"product": "https://example.com"}, "cpu": ["x86-64"],
          "free": True, "categories": ["productivity"]}
+    d.update(over)
+    return j(d)
+
+
+def new_wishlist(**over):
+    d = {"name": "Wish App", "description": "I would like this", "links": {"product": "https://example.com"},
+         "categories": ["productivity"]}
     d.update(over)
     return j(d)
 
@@ -239,6 +249,58 @@ class ValidatePR(unittest.TestCase):
 
     def test_symlinks_are_errors(self):
         self.assertError(self.evaluate(symlinks={SW + "/index.json": "/etc/passwd"}), "regular file")
+
+    # --- wishlist ---------------------------------------------------------
+
+    def test_new_wishlist_entry_is_eligible(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist()})
+        self.assertValid(r)
+        self.assertEqual(r.reasons, [])
+        self.assertTrue(r.eligible)
+
+    def test_wishlist_votes_file_in_pr_is_error(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/votes.txt": b"x\n"})
+        self.assertError(r, "votes are recorded by the wishlist app")
+        self.assertFalse(r.valid)
+
+    def test_wishlist_votes_file_modification_is_error(self):
+        r = self.evaluate({WL + "/votes.txt": b"a\nb\nc\n"})
+        self.assertError(r, "votes are recorded by the wishlist app")
+        self.assertFalse(r.valid)
+
+    def test_wishlist_votes_file_deletion_is_error(self):
+        r = self.evaluate(delete=[WL + "/votes.txt"])
+        self.assertError(r, "votes are recorded by the wishlist app")
+        self.assertFalse(r.valid)
+
+    def test_wishlist_unknown_key_is_error(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(cpu=["x86-64"])})
+        self.assertError(r, "unknown field")
+        self.assertFalse(r.valid)
+
+    def test_wishlist_missing_category_is_error(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(categories=["nope"])})
+        self.assertError(r, "unknown category")
+        self.assertFalse(r.valid)
+
+    def test_wishlist_wrong_shard_is_error(self):
+        r = self.evaluate({"data/wishlist/x/xx/newwish/index.json": new_wishlist()})
+        self.assertError(r, "wrong shard")
+        self.assertFalse(r.valid)
+
+    def test_wishlist_name_and_description_limits(self):
+        path = "data/wishlist/n/ne/newwish/index.json"
+        self.assertError(self.evaluate({path: new_wishlist(name="")}), "name")
+        self.assertError(self.evaluate({path: new_wishlist(name="x" * 101)}), "name")
+        self.assertError(self.evaluate({path: new_wishlist(description="x" * (v.MAX_DESCRIPTION + 1))}), "description")
+
+    def test_wishlist_bad_link_is_error(self):
+        r = self.evaluate({"data/wishlist/n/ne/newwish/index.json": new_wishlist(links={"product": "javascript:alert(1)"})})
+        self.assertError(r, "links.product")
+
+    def test_modifying_wishlist_index_needs_review_but_is_valid(self):
+        r = self.evaluate({WL + "/index.json": new_wishlist()})
+        self.assertReason(r, "modifies or deletes")
 
 
 class Unit(unittest.TestCase):
