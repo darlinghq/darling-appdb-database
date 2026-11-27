@@ -1,0 +1,13 @@
+{
+	"name": "Zsh",
+	"links": {
+		"product": "https://www.zsh.org"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true,
+	"categories": [
+		"developer-tools"
+	]
+}
