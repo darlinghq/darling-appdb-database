@@ -1,0 +1,13 @@
+{
+	"name": "pkgconf",
+	"links": {
+		"product": "https://github.com/pkgconf/pkgconf"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true,
+	"categories": [
+		"developer-tools"
+	]
+}
