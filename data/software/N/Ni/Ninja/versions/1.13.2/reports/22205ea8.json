@@ -1,0 +1,7 @@
+{
+	"status": "bronze",
+	"description": "Ninja is a small, fast build system. It was successfully installed and tested under Darling on Debian Linux (x86_64). The executable runs correctly and successfully builds C programs using the system Clang compiler.",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}
