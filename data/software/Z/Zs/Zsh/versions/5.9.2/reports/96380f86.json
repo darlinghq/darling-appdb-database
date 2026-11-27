@@ -1,0 +1,7 @@
+{
+	"status": "gold",
+	"description": "Zsh 5.9.2 successfully compiled and installed from source on Darling (macOS 11.7.4, x86_64). Interactive and login shells, native modules, command completion, autoload functions and color support were tested successfully. The original system Zsh 5.7.1 remains untouched.",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}
