@@ -1,0 +1,7 @@
+{
+	"status": "gold",
+	"description": "CMake is a cross-platform, open-source build system generator developed by Kitware. It supports multiple build environments and compilers, allowing developers to configure, generate, build, test, and package software projects.\n\nThis report covers CMake 3.23.2, distributed as an official precompiled macOS universal binary.",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}
