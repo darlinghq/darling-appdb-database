@@ -1,0 +1,7 @@
+{
+	"status": "gold",
+	"description": "Python is a high-level, interpreted, general-purpose programming language known for its clear syntax and readability. It supports multiple programming paradigms, including procedural, object-oriented, and functional programming.\n\nPython includes an extensive standard library and a large ecosystem of third-party packages, making it suitable for a wide range of applications, such as system administration, automation, web development, scientific computing, data analysis, artificial intelligence, and software development.\n\nIt provides an interactive interpreter, package management through pip, and built-in tools for creating isolated virtual environments.",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}

@@ -1,0 +1,13 @@
+{
+	"name": "Python",
+	"links": {
+		"product": "https://www.python.org/"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true,
+	"categories": [
+		"developer-tools"
+	]
+}
