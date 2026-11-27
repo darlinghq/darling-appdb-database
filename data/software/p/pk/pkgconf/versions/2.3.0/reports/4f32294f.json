@@ -1,0 +1,7 @@
+{
+	"status": "bronze",
+	"description": "pkgconf is a pkg-config-compatible tool used to provide compiler and linker flags for development libraries. It was successfully compiled and installed under Darling on Debian Linux (x86_64), including its libpkgconf shared library and development headers.",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}
