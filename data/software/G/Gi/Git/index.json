@@ -1,0 +1,13 @@
+{
+	"name": "Git",
+	"links": {
+		"product": "https://git-scm.com/"
+	},
+	"cpu": [
+		"x86-64"
+	],
+	"free": true,
+	"categories": [
+		"developer-tools"
+	]
+}
