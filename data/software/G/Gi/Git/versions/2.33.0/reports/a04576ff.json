@@ -1,0 +1,7 @@
+{
+	"status": "gold",
+	"description": "Git 2.33.0 successfully tested on Darling (macOS 11.7.4 compatibility environment), running on Debian GNU/Linux 13, x86_64.\n\nThe Intel Universal macOS installer was manually extracted and installed under /usr/local/git. Command-line symlinks were created in /usr/local/bin, preserving the original system Git 2.14.3 at /usr/bin/git.\n\nSuccessfully tested features include repository initialization, commits, branches, tags, stash, HTTPS cloning, remote fetching, recursive submodules, Git bundles, archive generation, and repository integrity verification.\n\nGit 2.33.0 is fully operational for the tested command-line workflows.",
+	"screenshots": [
+		"screenshot-0.jpg"
+	]
+}
